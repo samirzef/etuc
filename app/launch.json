@@ -20,7 +20,7 @@
           }
         ],
         "preLaunchTask": "build cpp",
-        "miDebuggerPath": "C:/winlibs/mingw64/bin/gdb.exe"
+        "miDebuggerPath": "C:/MinGW/bin/gdb.exe"
        }
     ]
   }

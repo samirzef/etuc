@@ -30,8 +30,8 @@ struct Edge {
 vector<Point> generatePoints(int n) {
     vector<Point> points(n);
     for (auto &p : points) {
-        p.x = rand() % 1000;
-        p.y = rand() % 1000;
+        p.x = rand() % 100;
+        p.y = rand() % 100;
     }
     return points;
 }
