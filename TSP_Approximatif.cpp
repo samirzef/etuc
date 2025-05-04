@@ -7,6 +7,12 @@
 #include <stack>
 #include <iomanip>
 using namespace std;
+#include <fstream> // pour gérer les fichiers
+
+
+void exportMatrixToExcel(const vector<vector<double>> &matrix, const string &filename);
+void exportResultsToExcel(double mstLen, double eulerLen, double hamiltonLen, double approximationFactor, const string &filename);
+
 
 struct Point {
     double x, y;
@@ -128,6 +134,9 @@ double calculateLength(const vector<int> &path, const vector<vector<double>> &gr
     return len;
 }
 
+
+ 
+
 // ---------- MAIN ----------
 int main() {
     srand(time(0));
@@ -158,5 +167,45 @@ int main() {
     cout << "Longueur du cycle hamiltonien        : " << hamiltonLen << endl;
     cout << "Facteur d'approximation               : " << (hamiltonLen / mstLen) << endl;
 
+    // Exporter la matrice des distances
+    exportMatrixToExcel(graph, "distance_matrix.csv");
+
+    // Exporter les résultats
+    exportResultsToExcel(mstLen, eulerLen, hamiltonLen, hamiltonLen / mstLen, "results.csv");
+
     return 0;
+}
+
+
+
+// Fonction pour exporter la matrice des distances dans un fichier CSV
+void exportMatrixToExcel(const vector<vector<double>> &matrix, const string &filename) {
+    ofstream file(filename);
+    if (file.is_open()) {
+        for (const auto &row : matrix) {
+            for (size_t i = 0; i < row.size(); ++i) {
+                file << row[i];
+                if (i < row.size() - 1) file << ",";
+            }
+            file << "\n";
+        }
+        file.close();
+    } else {
+        cerr << "Impossible d'ouvrir le fichier : " << filename << endl;
+    }
+}
+
+// Fonction pour exporter les résultats dans un fichier CSV
+void exportResultsToExcel(double mstLen, double eulerLen, double hamiltonLen, double approximationFactor, const string &filename) {
+    ofstream file(filename);
+    if (file.is_open()) {
+        file << "Métrique=Valeur\n";
+        file << "Longueur de l'arbre couvrant minimum=" << mstLen << "\n";
+        file << "Longueur du parcours eulérien=" << eulerLen << "\n";
+        file << "Longueur du cycle hamiltonien=" << hamiltonLen << "\n";
+        file << "Facteur d'approximation=" << approximationFactor << "\n";
+        file.close();
+    } else {
+        cerr << "Impossible d'ouvrir le fichier : " << filename << endl;
+    }
 }
