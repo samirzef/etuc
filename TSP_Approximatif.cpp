@@ -1,17 +1,16 @@
+// Delta-TSP Approximation in C++
+// Implements: Simulation, Kruskal's MST, Eulerian Tour, Hamiltonian Cycle Conversion
+
 #include <iostream>
 #include <vector>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
 #include <algorithm>
+#include <random>
+#include <ctime>
 #include <stack>
-#include <iomanip>
+#include <unordered_set>
+#include <set>
+
 using namespace std;
-
-struct Point {
-    double x, y;
-};
-
 struct Edge {
     int u, v;
     double weight;
@@ -20,143 +19,128 @@ struct Edge {
     }
 };
 
-// ---------- Génération du graphe complet ----------
-vector<Point> generatePoints(int n) {
-    vector<Point> points(n);
-    for (auto &p : points) {
-        p.x = rand() % 1000;
-        p.y = rand() % 1000;
+struct DSU {
+    vector<int> parent;
+    DSU(int n) : parent(n) {
+        for (int i = 0; i < n; ++i) parent[i] = i;
     }
-    return points;
-}
+    int find(int x) {
+        if (x != parent[x]) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int xr = find(x), yr = find(y);
+        if (xr == yr) return false;
+        parent[yr] = xr;
+        return true;
+    }
+};
 
-double euclidean(const Point &a, const Point &b) {
-    return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2));
-}
-
-vector<vector<double>> generateGraph(const vector<Point> &points) {
-    int n = points.size();
-    vector<vector<double>> graph(n, vector<double>(n));
-    for (int i = 0; i < n; ++i)
-        for (int j = 0; j < n; ++j)
-            graph[i][j] = euclidean(points[i], points[j]);
-    return graph;
-}
-
-// ---------- Kruskal ----------
-vector<int> parent, rankSet;
-
-int find(int u) {
-    if (u != parent[u]) parent[u] = find(parent[u]);
-    return parent[u];
-}
-
-bool unite(int u, int v) {
-    u = find(u);
-    v = find(v);
-    if (u == v) return false;
-    if (rankSet[u] < rankSet[v]) swap(u, v);
-    parent[v] = u;
-    if (rankSet[u] == rankSet[v]) rankSet[u]++;
-    return true;
-}
-
-vector<Edge> kruskal(vector<vector<double>> &graph) {
-    int n = graph.size();
+class Graph {
+public:
+    int n;
+    vector<vector<double>> dist;
     vector<Edge> edges;
-    for (int i = 0; i < n; ++i)
-        for (int j = i + 1; j < n; ++j)
-            edges.push_back({i, j, graph[i][j]});
 
-    sort(edges.begin(), edges.end());
-    parent.resize(n);
-    rankSet.resize(n, 0);
-    for (int i = 0; i < n; ++i) parent[i] = i;
+    Graph(int n) : n(n), dist(n, vector<double>(n, 0.0)) {}
 
-    vector<Edge> mst;
-    for (auto &e : edges)
-        if (unite(e.u, e.v)) mst.push_back(e);
-    return mst;
-}
-
-// ---------- Graphe eulérien ----------
-vector<vector<int>> buildEulerianGraph(const vector<Edge> &mst) {
-    vector<vector<int>> adj;
-    int n = 0;
-    for (auto &e : mst) n = max(n, max(e.u, e.v));
-    adj.resize(n + 1);
-    for (auto &e : mst) {
-        adj[e.u].push_back(e.v);
-        adj[e.v].push_back(e.u);
-        adj[e.u].push_back(e.v);
-        adj[e.v].push_back(e.u);
-    }
-    return adj;
-}
-
-// ---------- Parcours eulérien ----------
-void dfs(int u, vector<vector<int>> &adj, vector<int> &euler) {
-    while (!adj[u].empty()) {
-        int v = adj[u].back();
-        adj[u].pop_back();
-        auto it = find(adj[v].begin(), adj[v].end(), u);
-        if (it != adj[v].end()) adj[v].erase(it);
-        dfs(v, adj, euler);
-    }
-    euler.push_back(u);
-}
-
-// ---------- Hamiltonien ----------
-vector<int> eulerToHamilton(const vector<int> &euler) {
-    vector<int> hamilton;
-    vector<bool> visited(euler.size(), false);
-    for (int v : euler) {
-        if (!visited[v]) {
-            visited[v] = true;
-            hamilton.push_back(v);
+    void simulate() {
+        random_device rd;
+        mt19937 gen(rd());
+        uniform_real_distribution<> dis(1.0, 100.0);
+        for (int i = 0; i < n; ++i) {
+            for (int j = i + 1; j < n; ++j) {
+                double d = dis(gen);
+                dist[i][j] = dist[j][i] = d;
+                edges.push_back({i, j, d});
+            }
         }
     }
-    return hamilton;
-}
 
-// ---------- Calcul de longueur ----------
-double calculateLength(const vector<int> &path, const vector<vector<double>> &graph) {
-    double len = 0;
-    for (int i = 0; i < path.size() - 1; ++i)
-        len += graph[path[i]][path[i + 1]];
-    len += graph[path.back()][path[0]]; // retour au point de départ
-    return len;
-}
+    vector<Edge> kruskal() {
+        vector<Edge> mst;
+        DSU dsu(n);
+        sort(edges.begin(), edges.end());
+        for (Edge& e : edges) {
+            if (dsu.unite(e.u, e.v)) {
+                mst.push_back(e);
+            }
+        }
+        return mst;
+    }
 
-// ---------- MAIN ----------
+    vector<vector<int>> buildMultigraph(const vector<Edge>& mst) {
+        vector<vector<int>> adj(n);
+        for (const Edge& e : mst) {
+            adj[e.u].push_back(e.v);
+            adj[e.v].push_back(e.u);
+            adj[e.u].push_back(e.v);
+            adj[e.v].push_back(e.u);
+        }
+        return adj;
+    }
+
+    vector<int> findEulerianTour(vector<vector<int>>& adj) {
+        vector<int> tour;
+        stack<int> st;
+        vector<multiset<int>> localAdj(n);
+        for (int u = 0; u < n; ++u) {
+            for (int v : adj[u]) {
+                localAdj[u].insert(v);
+            }
+        }
+        st.push(0);
+        while (!st.empty()) {
+            int u = st.top();
+            if (localAdj[u].empty()) {
+                tour.push_back(u);
+                st.pop();
+            } else {
+                int v = *localAdj[u].begin();
+                localAdj[u].erase(localAdj[u].find(v));
+                localAdj[v].erase(localAdj[v].find(u));
+                st.push(v);
+            }
+        }
+        return tour;
+    }
+
+    vector<int> toHamiltonianCycle(const vector<int>& eulerian) {
+        vector<int> cycle;
+        unordered_set<int> visited;
+        for (int v : eulerian) {
+            if (visited.insert(v).second) {
+                cycle.push_back(v);
+            }
+        }
+        cycle.push_back(cycle[0]); // make it a cycle
+        return cycle;
+    }
+
+    double tourLength(const vector<int>& tour) {
+        double length = 0.0;
+        for (size_t i = 1; i < tour.size(); ++i) {
+            length += dist[tour[i-1]][tour[i]];
+        }
+        return length;
+    }
+};
+
 int main() {
-    srand(time(0));
-    int n;
-    cout << "Entrez le nombre de points : ";
-    cin >> n;
+    vector<int> sizes = {10, 20, 50};
+    for (int n : sizes) {
+        Graph g(n);
+        g.simulate();
+        auto mst = g.kruskal();
+        auto multigraph = g.buildMultigraph(mst);
+        auto eulerian = g.findEulerianTour(multigraph);
+        auto hamiltonian = g.toHamiltonianCycle(eulerian);
 
-    auto points = generatePoints(n);
-    auto graph = generateGraph(points);
-    auto mst = kruskal(graph);
-    auto adj = buildEulerianGraph(mst);
+        double opt_approx = g.tourLength(hamiltonian);
 
-    vector<int> euler;
-    dfs(0, adj, euler);
-    reverse(euler.begin(), euler.end());
-
-    auto hamilton = eulerToHamilton(euler);
-
-    double mstLen = 0;
-    for (auto &e : mst) mstLen += e.weight;
-    double eulerLen = calculateLength(euler, graph);
-    double hamiltonLen = calculateLength(hamilton, graph);
-
-    cout << fixed << setprecision(2);
-    cout << "\nRésultats pour n = " << n << endl;
-    cout << "Longueur de l'arbre couvrant minimum : " << mstLen << endl;
-    cout << "Longueur du parcours eulérien        : " << eulerLen << endl;
-    cout << "Longueur du cycle hamiltonien        : " << hamiltonLen << endl;
-    cout << "Facteur d'approximation               : " << (hamiltonLen / mstLen) << endl;
-
+        cout << "Size: " << n << endl;
+        cout << "Hamiltonian tour length (2-approximation): " << opt_approx << endl;
+        cout << "---" << endl;
+    }
     return 0;
 }
