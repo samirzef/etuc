@@ -1,3 +1,4 @@
+// graph.h
 #ifndef GRAPH_H
 #define GRAPH_H
 
@@ -5,25 +6,26 @@
 #include <random>
 #include <cmath>
 
-// Represents a weighted undirected edge
+template<typename T>
 struct Edge {
     int u, v;
-    double w;
+    T w;
 };
 
 class Graph {
 public:
     Graph(int n);
-    // Generate a random Δ‐metric on n points in the plane [0,1]²
     void generateRandomMetric(unsigned seed = std::random_device{}());
+    
     int size() const { return n; }
-    const std::vector<Edge>& edges() const { return edge_list; }
+    const std::vector<Edge<double>>& edges() const { return edge_list; }
     double distance(int u, int v) const { return dist[u][v]; }
+    const std::vector<std::vector<double>>& distanceMatrix() const { return dist; }
 
 private:
     int n;
     std::vector<std::vector<double>> dist;
-    std::vector<Edge> edge_list;
+    std::vector<Edge<double>> edge_list;
 };
 
 #endif // GRAPH_H
