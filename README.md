@@ -1,4 +1,5 @@
-# Dans le fichier "launch.json" ajuster le path du mingw64  
+# setup 
+Dans le fichier "launch.json" ajuster le path du mingw64  
  ```bash
  "miDebuggerPath": "C:/winlibs/mingw64/bin/gdb.exe"
  ```
