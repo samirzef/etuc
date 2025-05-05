@@ -6,7 +6,7 @@ Graph::Graph(int n_) : n(n_), dist(n, std::vector<double>(n, 0.0)) {}
 
 void Graph::generateRandomMetric(unsigned seed) {
     std::mt19937_64 rng(seed);
-    std::uniform_real_distribution<int> uni(0, 1.0);
+    std::uniform_real_distribution<double> uni(1, 10.0);
 
     std::vector<std::pair<double, double>> pts(n);
     for (int i = 0; i < n; ++i)

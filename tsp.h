@@ -13,6 +13,10 @@ public:
     double mstWeight() const { return mst_w; }
     double eulerLength() const { return euler_len; }
     const std::vector<int>& hamiltonianCycle() const { return cycle; }
+    const std::vector<Edge<double>>& getMSTEdges() const { return mst_edges; }
+    const std::vector<int>& getEulerTour() const { return eulerTour; }
+
+
 
 private:
     const Graph& G;
