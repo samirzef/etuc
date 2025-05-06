@@ -84,6 +84,8 @@ int main() {
     }
 
     out.close();
-    std::cout << "\nAll tasks completed. Results saved in 'full_results.csv'.\n";
+    std::cout << "All tasks completed. Results saved in 'kerdjidj_mohamedSeddik_zeghouf_samir.csv'.\n";
+    std::cout << "Press Enter to exit...";
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     return 0;
 }
